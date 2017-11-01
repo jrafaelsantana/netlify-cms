@@ -42,7 +42,10 @@ export function loadMedia(opts = {}) {
       const provider = getIntegrationProvider(state.integrations, backend.getToken, integration);
       dispatch(mediaLoading());
       return provider.retrieve(query)
-        .then(files => dispatch(mediaLoaded(files, true)))
+        .then(({ files, link }) => {
+          const mediaLoadedOpts = { dynamicSearch: true, dynamicSearchActive: !!query };
+          return dispatch(mediaLoaded(files, mediaLoadedOpts));
+        })
         .catch(error => dispatch(mediaLoadFailed()));
     }
     dispatch(mediaLoading());
@@ -129,10 +132,11 @@ export function mediaLoading() {
   return { type: MEDIA_LOAD_REQUEST };
 }
 
-export function mediaLoaded(files, dynamicSearch) {
+export function mediaLoaded(files, opts = {}) {
+  const { dynamicSearch, dynamicSearchActive } = opts;
   return {
     type: MEDIA_LOAD_SUCCESS,
-    payload: { files, dynamicSearch }
+    payload: { files, dynamicSearch, dynamicSearchActive }
   };
 }
 
