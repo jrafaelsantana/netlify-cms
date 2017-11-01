@@ -218,8 +218,8 @@ class MediaLibrary extends React.Component {
    * the GitHub backend, search is in-memory and occurs as the query is typed,
    * so this handler has no impact.
    */
-  handleSearchKeyDown = (event, dynamicSearch) => {
-    if (event.key === 'Enter' && dynamicSearch) {
+  handleSearchKeyDown = (event) => {
+    if (event.key === 'Enter' && this.props.dynamicSearch) {
       this.props.loadMedia({ query: this.state.query });
     }
   };
@@ -290,7 +290,17 @@ class MediaLibrary extends React.Component {
   };
 
   render() {
-    const { isVisible, canInsert, files, dynamicSearch, forImage, isLoading, isPersisting, isDeleting } = this.props;
+    const {
+      isVisible,
+      canInsert,
+      files,
+      dynamicSearch,
+      dynamicSearchActive,
+      forImage,
+      isLoading,
+      isPersisting,
+      isDeleting,
+    } = this.props;
     const { query, selectedFile } = this.state;
     const filteredFiles = forImage ? this.filterImages(files) : files;
     const queriedFiles = (!dynamicSearch && query) ? this.queryFilter(query, filteredFiles) : filteredFiles;
@@ -300,11 +310,13 @@ class MediaLibrary extends React.Component {
     const hasSearchResults = queriedFiles && !!queriedFiles.length;
     const hasMedia = hasSearchResults;
     const shouldShowProgressBar = isPersisting || isDeleting || isLoading;
+    const shouldShowEmptyMessage = !shouldShowProgressBar && !hasMedia;
     const loadingMessage = (isPersisting && 'Uploading...')
       || (isDeleting && 'Deleting...')
       || (isLoading && 'Loading...');
-    const emptyMessage = (!hasFilteredFiles && 'No images found.')
-      || (!hasFiles && 'No files found.')
+    const emptyMessage = (dynamicSearchActive && 'No results.')
+      || (!hasFiles && 'No assets found.')
+      || (!hasFilteredFiles && 'No images found.')
       || (!hasSearchResults && 'No results.');
 
     return (
@@ -330,9 +342,9 @@ class MediaLibrary extends React.Component {
           className="nc-mediaLibrary-searchInput"
           value={query}
           onChange={this.handleSearchChange}
-          onKeyDown={event => this.handleSearchKeyDown(event, dynamicSearch)}
+          onKeyDown={event => this.handleSearchKeyDown(event)}
           placeholder="Search..."
-          disabled={!hasFilteredFiles}
+          disabled={!dynamicSearchActive && !hasFilteredFiles}
           autoFocus
         />
         <div className="nc-mediaLibrary-tableContainer">
@@ -347,7 +359,11 @@ class MediaLibrary extends React.Component {
               getSortDirection={this.getSortDirection}
               onSortClick={this.handleSortClick}
             />
-            { hasMedia ? null : <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div> }
+            {
+              shouldShowEmptyMessage
+                ? <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div>
+                : null
+            }
           </div>
         </div>
       </Dialog>
@@ -365,6 +381,7 @@ const mapStateToProps = state => {
     canInsert: mediaLibrary.get('canInsert'),
     files: mediaLibrary.get('files'),
     dynamicSearch: mediaLibrary.get('dynamicSearch'),
+    dynamicSearchActive: mediaLibrary.get('dynamicSearchActive'),
     forImage: mediaLibrary.get('forImage'),
     isLoading: mediaLibrary.get('isLoading'),
     isPersisting: mediaLibrary.get('isPersisting'),

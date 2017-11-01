@@ -40,6 +40,7 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
         map.set('isLoading', false);
         map.set('files', action.payload.files);
         map.set('dynamicSearch', action.payload.dynamicSearch);
+        map.set('dynamicSearchActive', action.payload.dynamicSearchActive);
       });
     case MEDIA_LOAD_FAILURE:
       return state.set('isLoading', false);
