@@ -1,5 +1,6 @@
 import { get } from 'lodash';
 import { Map } from 'immutable';
+import uuid from 'uuid/v4';
 import {
   MEDIA_LIBRARY_OPEN,
   MEDIA_LIBRARY_CLOSE,
@@ -37,6 +38,7 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
       return state.set('isLoading', true);
     case MEDIA_LOAD_SUCCESS:
       const { files, page, canPaginate, dynamicSearch, dynamicSearchQuery } = action.payload;
+      const filesWithKeys = files.map(file => ({ ...file, key: uuid() }));
       return state.withMutations(map => {
         map.set('isLoading', false);
         map.set('page', page);
@@ -45,9 +47,9 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
         map.set('dynamicSearchQuery', dynamicSearchQuery);
         map.set('dynamicSearchActive', !!dynamicSearchQuery);
         if (page && page > 0) {
-          map.set('files', map.get('files').concat(files));
+          map.set('files', map.get('files').concat(filesWithKeys));
         } else {
-          map.set('files', files);
+          map.set('files', filesWithKeys);
         }
       });
     case MEDIA_LOAD_FAILURE:

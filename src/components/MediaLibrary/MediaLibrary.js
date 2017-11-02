@@ -60,10 +60,10 @@ class MediaLibrary extends React.Component {
    * Transform file data for table display.
    */
   toTableData = files => {
-    const tableData = files && files.map(({ id, name, size, queryOrder, url, urlIsPublicPath }) => {
+    const tableData = files && files.map(({ key, name, size, queryOrder, url, urlIsPublicPath }) => {
       const ext = last(name.split('.'));
       return {
-        id,
+        key,
         name,
         type: ext.toUpperCase(),
         size,
@@ -92,7 +92,7 @@ class MediaLibrary extends React.Component {
    * Toggle asset selection on click.
    */
   handleAssetClick = asset => {
-    const selectedFile = this.state.selectedFile.id === asset.id ? {} : asset;
+    const selectedFile = this.state.selectedFile.key === asset.key ? {} : asset;
     this.setState({ selectedFile });
   };
 
@@ -142,7 +142,7 @@ class MediaLibrary extends React.Component {
     if (!window.confirm('Are you sure you want to delete selected media?')) {
       return;
     }
-    const file = files.find(file => selectedFile.id === file.id);
+    const file = files.find(file => selectedFile.key === file.key);
     deleteMedia(file)
       .then(() => {
         this.setState({ selectedFile: {} });
@@ -256,8 +256,8 @@ class MediaLibrary extends React.Component {
           {
             tableData.map((file, idx) =>
               <div
-                key={file.name}
-                className={c('nc-mediaLibrary-card', { 'nc-mediaLibrary-card-selected': selectedFile.id === file.id })}
+                key={file.key}
+                className={c('nc-mediaLibrary-card', { 'nc-mediaLibrary-card-selected': selectedFile.key === file.key })}
                 onClick={() => this.handleAssetClick(file)}
               >
                 <div className="nc-mediaLibrary-cardImage-container">
