@@ -214,12 +214,9 @@ class MediaLibrary extends React.Component {
     const hasFilteredFiles = filteredFiles && !!filteredFiles.length;
     const hasSearchResults = queriedFiles && !!queriedFiles.length;
     const hasMedia = hasSearchResults;
-    const shouldShowProgressBar = isPersisting || isDeleting || isLoading;
-    const shouldShowEmptyMessage = !shouldShowProgressBar && !hasMedia;
-    const loadingMessage = (isPersisting && 'Uploading...')
-      || (isDeleting && 'Deleting...')
-      || (isLoading && 'Loading...');
-    const emptyMessage = (dynamicSearchActive && 'No results.')
+    const shouldShowEmptyMessage = !hasMedia;
+    const emptyMessage = (isLoading && !hasMedia && 'Loading...')
+      || (dynamicSearchActive && 'No results.')
       || (!hasFiles && 'No assets found.')
       || (!hasFilteredFiles && 'No images found.')
       || (!hasSearchResults && 'No results.');
@@ -227,8 +224,6 @@ class MediaLibrary extends React.Component {
     return (
       <Dialog
         isVisible={isVisible}
-        isLoading={shouldShowProgressBar}
-        loadingMessage={loadingMessage}
         onClose={this.handleClose}
         className="nc-mediaLibrary-dialog"
         footer={
@@ -240,6 +235,8 @@ class MediaLibrary extends React.Component {
             hasSelection={hasMedia && !isEmpty(selectedFile)}
             forImage={forImage}
             canInsert={canInsert}
+            isPersisting={isPersisting}
+            isDeleting={isDeleting}
           />
         }
       >

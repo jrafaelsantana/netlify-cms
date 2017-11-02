@@ -38,6 +38,21 @@
   margin-right: 10px;
 }
 
+.nc-mediaLibrary-button-loader {
+  float: left;
+  margin: 8px 20px;
+}
+
+.nc-mediaLibrary-button-loaderSpinner {
+  position: static;
+}
+
+.nc-mediaLibrary-button-loaderText {
+  position: relative;
+  top: 2px;
+  margin-left: 18px;
+}
+
 .nc-mediaLibrary-searchInput {
   @apply --input;
   font-family: var(--fontFamilyPrimary);
