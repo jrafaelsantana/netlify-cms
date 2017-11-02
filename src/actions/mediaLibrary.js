@@ -33,20 +33,22 @@ export function insertMedia(mediaPath) {
 }
 
 export function loadMedia(opts = {}) {
-  const { delay = 0, query = '' } = opts;
-  return (dispatch, getState) => {
+  const { delay = 0, query = '', page = 0 } = opts;
+  return async (dispatch, getState) => {
     const state = getState();
     const backend = currentBackend(state.config);
     const integration = selectIntegration(state, null, 'assetStore');
     if (integration) {
       const provider = getIntegrationProvider(state.integrations, backend.getToken, integration);
       dispatch(mediaLoading());
-      return provider.retrieve(query)
-        .then(({ files, link }) => {
-          const mediaLoadedOpts = { dynamicSearch: true, dynamicSearchActive: !!query };
-          return dispatch(mediaLoaded(files, mediaLoadedOpts));
-        })
-        .catch(error => dispatch(mediaLoadFailed()));
+      try {
+        const files = await provider.retrieve(query, page);
+        const mediaLoadedOpts = { page, dynamicSearch: true, dynamicSearchQuery: query };
+        return dispatch(mediaLoaded(files, mediaLoadedOpts));
+      }
+      catch(error) {
+        return dispatch(mediaLoadFailed());
+      }
     }
     dispatch(mediaLoading());
     return new Promise(resolve => {
@@ -133,10 +135,9 @@ export function mediaLoading() {
 }
 
 export function mediaLoaded(files, opts = {}) {
-  const { dynamicSearch, dynamicSearchActive } = opts;
   return {
     type: MEDIA_LOAD_SUCCESS,
-    payload: { files, dynamicSearch, dynamicSearchActive }
+    payload: { files, ...opts }
   };
 }
 

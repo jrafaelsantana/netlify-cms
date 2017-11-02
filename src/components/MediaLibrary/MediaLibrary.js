@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { orderBy, get, last, isEmpty, map } from 'lodash';
 import fuzzy from 'fuzzy';
+import Waypoint from 'react-waypoint';
 import Dialog from '../UI/Dialog';
 import { resolvePath } from '../../lib/pathHelper';
 import { changeDraftField } from '../../actions/entries';
@@ -211,6 +212,11 @@ class MediaLibrary extends React.Component {
       });
   };
 
+  handleLoadMore = () => {
+    const { loadMedia, dynamicSearchQuery, page } = this.props;
+    loadMedia({ query: dynamicSearchQuery, page: page + 1 });
+  };
+
   /**
    * Executes media library search for implementations that support dynamic
    * search via request. For these implementations, the Enter key must be
@@ -359,6 +365,7 @@ class MediaLibrary extends React.Component {
               getSortDirection={this.getSortDirection}
               onSortClick={this.handleSortClick}
             />
+            <Waypoint onEnter={() => hasMedia && this.handleLoadMore()}/>
             {
               shouldShowEmptyMessage
                 ? <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div>
@@ -382,11 +389,13 @@ const mapStateToProps = state => {
     files: mediaLibrary.get('files'),
     dynamicSearch: mediaLibrary.get('dynamicSearch'),
     dynamicSearchActive: mediaLibrary.get('dynamicSearchActive'),
+    dynamicSearchQuery: mediaLibrary.get('dynamicSearchQuery'),
     forImage: mediaLibrary.get('forImage'),
     isLoading: mediaLibrary.get('isLoading'),
     isPersisting: mediaLibrary.get('isPersisting'),
     isDeleting: mediaLibrary.get('isDeleting'),
     privateUpload: mediaLibrary.get('privateUpload'),
+    page: mediaLibrary.get('page'),
   };
   return { ...configProps, ...mediaLibraryProps };
 };

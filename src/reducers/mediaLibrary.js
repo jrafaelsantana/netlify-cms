@@ -36,11 +36,18 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
     case MEDIA_LOAD_REQUEST:
       return state.set('isLoading', true);
     case MEDIA_LOAD_SUCCESS:
+      const { files, page, dynamicSearch, dynamicSearchQuery } = action.payload;
       return state.withMutations(map => {
         map.set('isLoading', false);
-        map.set('files', action.payload.files);
-        map.set('dynamicSearch', action.payload.dynamicSearch);
-        map.set('dynamicSearchActive', action.payload.dynamicSearchActive);
+        map.set('page', page);
+        map.set('dynamicSearch', dynamicSearch);
+        map.set('dynamicSearchQuery', dynamicSearchQuery);
+        map.set('dynamicSearchActive', !!dynamicSearchQuery);
+        if (page > 0) {
+          map.set('files', map.get('files').concat(files));
+        } else {
+          map.set('files', files);
+        }
       });
     case MEDIA_LOAD_FAILURE:
       return state.set('isLoading', false);

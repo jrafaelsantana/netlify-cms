@@ -1,3 +1,4 @@
+import { pickBy } from 'lodash';
 import { addParams } from '../../../lib/urlHelper';
 
 export default class AssetStore {
@@ -54,35 +55,30 @@ export default class AssetStore {
     }));
   }
 
-
-  request(path, options = {}) {
+  async request(path, options = {}) {
     const headers = this.requestHeaders(options.headers || {});
     const url = this.urlFor(path, options);
-    return fetch(url, { ...options, headers }).then((response) => {
-      const contentType = response.headers.get('Content-Type');
-      if (contentType && contentType.match(/json/)) {
-        return this.parseJsonResponse(response);
-      }
-
-      return response.text();
-    });
+    const response = await fetch(url, { ...options, headers });
+    const contentType = response.headers.get('Content-Type');
+    const isJson = contentType && contentType.match(/json/);
+    const content = isJson ? await this.parseJsonResponse(response) : response.text();
+    return content;
   }
 
-  retrieve(query) {
-    const url = query ? addParams(this.getSignedFormURL, { search: query }) : this.getSignedFormURL;
-    console.log(url);
-
-    return this.getToken()
-      .then(token => this.request(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ token }`,
-        },
-      }))
-      .then(files => files.map(({ id, name, size, url }) => {
-        return { id, name, size, url, urlIsPublicPath: true };
-      }));
+  async retrieve(query, page) {
+    const params = pickBy({ search: query, page }, val => !!val);
+    const url = addParams(this.getSignedFormURL, params);
+    const token = await this.getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ token }`,
+    };
+    const response = await this.request(url, { headers });
+    const files = response.map(({ id, name, size, url }) => {
+      return { id, name, size, url, urlIsPublicPath: true };
+    });
+    console.log(files);
+    return files;
   }
 
   delete(assetID) {
