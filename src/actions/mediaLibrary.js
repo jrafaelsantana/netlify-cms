@@ -33,7 +33,7 @@ export function insertMedia(mediaPath) {
 }
 
 export function loadMedia(opts = {}) {
-  const { delay = 0, query = '', page = 0 } = opts;
+  const { delay = 0, query = '', page = 1 } = opts;
   return async (dispatch, getState) => {
     const state = getState();
     const backend = currentBackend(state.config);
