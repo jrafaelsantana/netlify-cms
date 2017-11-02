@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { orderBy, get, last, isEmpty, map } from 'lodash';
+import c from 'classnames';
 import fuzzy from 'fuzzy';
 import Waypoint from 'react-waypoint';
 import Dialog from '../UI/Dialog';
@@ -13,18 +14,7 @@ import {
   insertMedia as insertMediaAction,
   closeMediaLibrary as closeMediaLibraryAction,
 } from '../../actions/mediaLibrary';
-import MediaLibraryTable from './MediaLibraryTable';
 import MediaLibraryFooter from './MediaLibraryFooter';
-
-/**
- * Key used to store user's last sort settings in local storage.
- */
-const MEDIA_LIBRARY_SORT_KEY = 'cms.medlib-sort';
-
-/**
- * Default sort value.
- */
-const DEFAULT_SORT = [{ fieldName: 'name', direction: 'asc' }];
 
 /**
  * Extensions used to determine which files to show when the media library is
@@ -32,17 +22,15 @@ const DEFAULT_SORT = [{ fieldName: 'name', direction: 'asc' }];
  */
 const IMAGE_EXTENSIONS = [ 'jpg', 'jpeg', 'webp', 'gif', 'png', 'bmp', 'svg', 'tiff' ];
 
-
 class MediaLibrary extends React.Component {
 
   /**
-   * The currently selected file, query, and sort are tracked in component state
-   * as they do not impact the rest of the application.
+   * The currently selected file and query are tracked in component state as
+   * they do not impact the rest of the application.
    */
   state = {
     selectedFile: {},
     query: '',
-    sortFields: JSON.parse(localStorage.getItem(MEDIA_LIBRARY_SORT_KEY)) || DEFAULT_SORT,
   };
 
   componentDidMount() {
@@ -101,62 +89,11 @@ class MediaLibrary extends React.Component {
   };
 
   /**
-   * Select a row when the checkbox is clicked, or unselect if already selected.
+   * Toggle asset selection on click.
    */
-  handleRowSelect = row => {
-    const selectedFile = this.state.selectedFile.id === row.id ? {} : row;
+  handleAssetClick = asset => {
+    const selectedFile = this.state.selectedFile.id === asset.id ? {} : asset;
     this.setState({ selectedFile });
-  };
-
-  /**
-   * Sets sort state for a sortable field when its header is clicked.
-   */
-  handleSortClick = fieldName => {
-    /**
-     * Get the current sort direction for the field being sorted.
-     */
-    const { sortFields } = this.state;
-    const currentSort = sortFields.find(sort => sort.fieldName === fieldName) || {};
-    const { direction } = currentSort;
-
-    /**
-     * If a field is not sorted, or the user has not clicked through both sort
-     * directions, the current click should result in a new sort for the field.
-     */
-    const shouldSort = !direction || direction === 'asc';
-
-    /**
-     * Create an object representing the new sort. If this is a falsey value,
-     * the field sort will be removed.
-     */
-    const newSortField = shouldSort && { fieldName, direction: !direction ? 'asc' : 'desc' };
-
-    /**
-     * Get the sort objects for all fields except the field currently being
-     * updated.
-     */
-    const remainingSorts = sortFields.filter(sort => sort.fieldName !== fieldName);
-
-    /**
-     * Update all sorts by prepending the new sort, or by returning the existing
-     * sorts with the current field's sort removed.
-     */
-    const newSort = shouldSort ? [newSortField, ...remainingSorts] : remainingSorts;
-
-    /**
-     * Store the update sorts in local storage and update state.
-     */
-    localStorage.setItem(MEDIA_LIBRARY_SORT_KEY, JSON.stringify(newSort));
-    this.setState({ sortFields: newSort });
-  }
-
-  /**
-   * Get sort direction for a field.
-   */
-  getSortDirection = fieldName => {
-    const { sortFields } = this.state;
-    const sort = sortFields.find(sort => sort.fieldName === fieldName);
-    return get(sort, 'direction');
   };
 
   /**
@@ -255,46 +192,6 @@ class MediaLibrary extends React.Component {
     return matchFiles;
   };
 
-  /**
-   * Adds row focus styling, and scrolls the focused row into view if it's not
-   * already visible.
-   */
-  handleRowFocus = event => {
-    const scrollContainer = this.tableScrollRef.parentElement;
-    const scrollContainerInnerHeight = scrollContainer.clientHeight;
-    const scrollContainerBottomPadding = 130;
-    const scrollElement = this.tableScrollRef;
-    const scrollPosition = scrollElement.scrollTop;
-    const row = event.currentTarget;
-    const rowHeight = row.offsetHeight;
-    const rowPosition = row.offsetTop;
-
-    event.currentTarget.classList.add('nc-mediaLibrary-rowFocused');
-
-    const rowAboveVisibleArea = scrollPosition > rowPosition;
-
-    if (rowAboveVisibleArea) {
-      scrollElement.scrollTop = rowPosition;
-      return;
-    }
-
-    const effectiveScrollPosition = scrollContainerInnerHeight + scrollPosition;
-    const effectiveRowPosition = rowPosition + rowHeight + scrollContainerBottomPadding;
-    const rowBelowVisibleArea = effectiveScrollPosition < effectiveRowPosition;
-
-    if (rowBelowVisibleArea) {
-      const scrollTopOffset = scrollContainerInnerHeight - scrollContainerBottomPadding - rowHeight;
-      scrollElement.scrollTop = rowPosition - scrollTopOffset;
-    }
-  };
-
-  /**
-   * Remove row focus styling on blur.
-   */
-  handleRowBlur = event => {
-    event.currentTarget.classList.remove('nc-mediaLibrary-rowFocused');
-  };
-
   render() {
     const {
       isVisible,
@@ -306,6 +203,8 @@ class MediaLibrary extends React.Component {
       isLoading,
       isPersisting,
       isDeleting,
+      hasNextPage,
+      page,
     } = this.props;
     const { query, selectedFile } = this.state;
     const filteredFiles = forImage ? this.filterImages(files) : files;
@@ -353,25 +252,31 @@ class MediaLibrary extends React.Component {
           disabled={!dynamicSearchActive && !hasFilteredFiles}
           autoFocus
         />
-        <div className="nc-mediaLibrary-tableContainer">
-          <div className="nc-mediaLibrary-tableContainer-inner" ref={ref => this.tableScrollRef = ref}>
-            <MediaLibraryTable
-              data={tableData}
-              selectedFile={selectedFile}
-              hasMedia={hasMedia}
-              onRowSelect={this.handleRowSelect}
-              onRowFocus={this.handleRowFocus}
-              onRowBlur={this.handleRowBlur}
-              getSortDirection={this.getSortDirection}
-              onSortClick={this.handleSortClick}
-            />
-            <Waypoint onEnter={() => hasMedia && this.handleLoadMore()}/>
-            {
-              shouldShowEmptyMessage
-                ? <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div>
-                : null
-            }
-          </div>
+        <div className="nc-mediaLibrary-cardGrid">
+          {
+            tableData.map((file, idx) =>
+              <div
+                key={file.name}
+                className={c('nc-mediaLibrary-card', { 'nc-mediaLibrary-card-selected': selectedFile.id === file.id })}
+                onClick={() => this.handleAssetClick(file)}
+              >
+                <div className="nc-mediaLibrary-cardImage-container">
+                  <img src={file.url} className="nc-mediaLibrary-cardImage"/>
+                </div>
+                <p className="nc-mediaLibrary-cardText">{file.name}</p>
+              </div>
+            )
+          }
+          {
+            hasNextPage
+              ? <Waypoint onEnter={() => this.handleLoadMore()}/>
+              : null
+          }
+          {
+            shouldShowEmptyMessage
+              ? <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div>
+              : null
+          }
         </div>
       </Dialog>
     );
@@ -396,6 +301,7 @@ const mapStateToProps = state => {
     isDeleting: mediaLibrary.get('isDeleting'),
     privateUpload: mediaLibrary.get('privateUpload'),
     page: mediaLibrary.get('page'),
+    hasNextPage: mediaLibrary.get('hasNextPage'),
   };
   return { ...configProps, ...mediaLibraryProps };
 };
