@@ -43,7 +43,12 @@ export function loadMedia(opts = {}) {
       dispatch(mediaLoading());
       try {
         const files = await provider.retrieve(query, page);
-        const mediaLoadedOpts = { page, dynamicSearch: true, dynamicSearchQuery: query };
+        const mediaLoadedOpts = {
+          page,
+          canPaginate: true,
+          dynamicSearch: true,
+          dynamicSearchQuery: query
+        };
         return dispatch(mediaLoaded(files, mediaLoadedOpts));
       }
       catch(error) {
