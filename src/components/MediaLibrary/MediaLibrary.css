@@ -1,3 +1,33 @@
+:root {
+  --mediaLibraryCardWidth: 300px;
+  --mediaLibraryCardMargin: 10px;
+  --mediaLibraryCardOutsideWidth: calc(var(--mediaLibraryCardWidth) + var(--mediaLibraryCardMargin) * 2);
+}
+
+.nc-mediaLibrary-dialog {
+  width: calc(var(--mediaLibraryCardOutsideWidth) + 48px);
+
+  @media (width >= 800px) {
+    width: calc(var(--mediaLibraryCardOutsideWidth) * 2 + 48px);
+  }
+
+  @media (width >= 1120px) {
+    width: calc(var(--mediaLibraryCardOutsideWidth) * 3 + 48px);
+  }
+
+  @media (width >= 1440px) {
+    width: calc(var(--mediaLibraryCardOutsideWidth) * 4 + 48px);
+  }
+
+  @media (width >= 1760px) {
+    width: calc(var(--mediaLibraryCardOutsideWidth) * 5 + 48px);
+  }
+
+  @media (width >= 2080px) {
+    width: calc(var(--mediaLibraryCardOutsideWidth) * 6 + 48px);
+  }
+}
+
 .nc-mediaLibrary-buttonRight {
   float: right;
   margin-left: 10px;
@@ -40,19 +70,19 @@
 
 .nc-mediaLibrary-cardGrid {
   height: calc(100% - 150px);
-  margin: 20px 20px 0;
+  margin: 20px auto 0;
   overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
 }
 
 .nc-mediaLibrary-card {
-  width: 300px;
+  width: var(--mediaLibraryCardWidth);
   height: 240px;
+  margin: var(--mediaLibraryCardMargin);
   border: var(--textFieldBorder);
   border-radius: var(--borderRadius);
   cursor: pointer;
-  margin: 10px;
 }
 
 .nc-mediaLibrary-card-selected {

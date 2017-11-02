@@ -230,6 +230,7 @@ class MediaLibrary extends React.Component {
         isLoading={shouldShowProgressBar}
         loadingMessage={loadingMessage}
         onClose={this.handleClose}
+        className="nc-mediaLibrary-dialog"
         footer={
           <MediaLibraryFooter
             onDelete={this.handleDelete}

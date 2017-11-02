@@ -19,13 +19,23 @@ const progressBarTheme = {
   linear: 'nc-dialog-progressBar-linear',
 };
 
-const Dialog = ({ type, isVisible, isLoading, loadingMessage, onClose, footer, children }) =>
+const Dialog = ({
+  type,
+  isVisible,
+  isLoading,
+  loadingMessage,
+  onClose,
+  footer,
+  className,
+  children,
+}) =>
   <RTDialog
     type={type || 'large'}
     active={isVisible}
     onEscKeyDown={onClose}
     onOverlayClick={onClose}
     theme={dialogTheme}
+    className={className}
   >
     <FocusTrap
       active={isVisible && !isLoading}
