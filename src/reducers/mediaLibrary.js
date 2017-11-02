@@ -46,8 +46,9 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
         map.set('dynamicSearch', dynamicSearch);
         map.set('dynamicSearchQuery', dynamicSearchQuery);
         map.set('dynamicSearchActive', !!dynamicSearchQuery);
-        if (page && page > 0) {
-          map.set('files', map.get('files').concat(filesWithKeys));
+        if (page && page > 1) {
+          const updatedFiles = map.get('files').concat(filesWithKeys);
+          map.set('files', updatedFiles);
         } else {
           map.set('files', filesWithKeys);
         }

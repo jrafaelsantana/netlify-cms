@@ -77,7 +77,6 @@ export default class AssetStore {
     const files = response.map(({ id, name, size, url }) => {
       return { id, name, size, url, urlIsPublicPath: true };
     });
-    console.log(files);
     return files;
   }
 
