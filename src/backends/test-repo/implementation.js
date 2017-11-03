@@ -113,7 +113,7 @@ export default class TestRepo {
     const normalizedAsset = { id: uuid(), name, size, path: url, url };
 
     this.assets.push(normalizedAsset);
-    return Promise.resolve();
+    return Promise.resolve(normalizedAsset);
   }
 
   deleteFile(path, commitMessage) {
