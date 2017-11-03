@@ -92,7 +92,7 @@ export default class AssetStore {
       }));
   }
 
-  upload(file, privateUpload = false) {
+  async upload(file, privateUpload = false) {
     const fileData = {
       name: file.name,
       size: file.size
@@ -105,33 +105,35 @@ export default class AssetStore {
       fileData.visibility = 'private';
     }
 
-    return this.getToken()
-    .then(token => this.request(this.getSignedFormURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ token }`,
-      },
-      body: JSON.stringify(fileData),
-    }))
-    .then((response) => {
+    try {
+      const token = await this.getToken();
+      const response = await this.request(this.getSignedFormURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${ token }`,
+        },
+        body: JSON.stringify(fileData),
+      });
       const formURL = response.form.url;
       const formFields = response.form.fields;
-      const assetID = response.asset.id;
-      const assetURL = response.asset.url;
+      const { id, name, size, url } = response.asset;
 
       const formData = new FormData();
       Object.keys(formFields).forEach(key => formData.append(key, formFields[key]));
       formData.append('file', file, file.name);
 
-      return this.request(formURL, {
-        method: 'POST',
-        body: formData,
-      })
-      .then(() => {
-        if (this.shouldConfirmUpload) this.confirmRequest(assetID);
-        return { success: true, assetURL };
-      });
-    });
+      await this.request(formURL, { method: 'POST', body: formData });
+
+      if (this.shouldConfirmUpload) {
+        await this.confirmRequest(id);
+      }
+
+      const asset = { id, name, size, url, urlIsPublicPath: true };
+      return { success: true, url, asset };
+    }
+    catch(error) {
+      console.error(error);
+    }
   }
 }

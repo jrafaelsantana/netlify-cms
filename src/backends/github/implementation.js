@@ -1,3 +1,4 @@
+import trimStart from 'lodash/trimStart';
 import semaphore from "semaphore";
 import AuthenticationPage from "./AuthenticationPage";
 import API from "./API";
@@ -101,8 +102,16 @@ export default class GitHub {
     return this.api.persistFiles(entry, mediaFiles, options);
   }
 
-  persistMedia(mediaFile, options = {}) {
-    return this.api.persistFiles(null, [mediaFile], options);
+  async persistMedia(mediaFile, options = {}) {
+    try {
+      const response = await this.api.persistFiles(null, [mediaFile], options);
+      const { value, size, path, fileObj } = mediaFile;
+      const url = `https://raw.githubusercontent.com/${this.repo}/${this.branch}${path}`;
+      return { id: response.sha, name: value, size: fileObj.size, url, path: trimStart(path, '/') };
+    }
+    catch(error) {
+      console.error(error);
+    }
   }
 
   deleteFile(path, commitMessage, options) {

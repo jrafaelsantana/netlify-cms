@@ -36,7 +36,7 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
     }
     case MEDIA_LOAD_REQUEST:
       return state.set('isLoading', true);
-    case MEDIA_LOAD_SUCCESS:
+    case MEDIA_LOAD_SUCCESS: {
       const { files, page, canPaginate, dynamicSearch, dynamicSearchQuery } = action.payload;
       const filesWithKeys = files.map(file => ({ ...file, key: uuid() }));
       return state.withMutations(map => {
@@ -53,16 +53,33 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
           map.set('files', filesWithKeys);
         }
       });
+    }
     case MEDIA_LOAD_FAILURE:
       return state.set('isLoading', false);
     case MEDIA_PERSIST_REQUEST:
       return state.set('isPersisting', true);
-    case MEDIA_PERSIST_SUCCESS:
+    case MEDIA_PERSIST_SUCCESS: {
+      const { file } = action.payload;
+      console.log(file);
+      return state.withMutations(map => {
+        const fileWithKey = { ...file, key: uuid() };
+        const updatedFiles = [fileWithKey, ...map.get('files')];
+        map.set('files', updatedFiles);
+        map.set('isPersisting', false);
+      });
+    }
     case MEDIA_PERSIST_FAILURE:
       return state.set('isPersisting', false);
     case MEDIA_DELETE_REQUEST:
       return state.set('isDeleting', true);
-    case MEDIA_DELETE_SUCCESS:
+    case MEDIA_DELETE_SUCCESS: {
+      const { key } = action.payload.file;
+      return state.withMutations(map => {
+        const updatedFiles = map.get('files').filter(file => file.key !== key);
+        map.set('files', updatedFiles);
+        map.set('isDeleting', false);
+      });
+    }
     case MEDIA_DELETE_FAILURE:
       return state.set('isDeleting', false);
     default:
