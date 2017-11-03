@@ -20,7 +20,8 @@ import MediaLibraryFooter from './MediaLibraryFooter';
  * Extensions used to determine which files to show when the media library is
  * accessed from an image insertion field.
  */
-const IMAGE_EXTENSIONS = [ 'jpg', 'jpeg', 'webp', 'gif', 'png', 'bmp', 'svg', 'tiff' ];
+const IMAGE_EXTENSIONS_VIEWABLE = [ 'jpg', 'jpeg', 'webp', 'gif', 'png', 'bmp', 'tiff' ];
+const IMAGE_EXTENSIONS = [ ...IMAGE_EXTENSIONS_VIEWABLE, 'svg' ];
 
 class MediaLibrary extends React.Component {
 
@@ -71,6 +72,7 @@ class MediaLibrary extends React.Component {
         url,
         urlIsPublicPath,
         isImage: IMAGE_EXTENSIONS.includes(ext),
+        isViewableImage: IMAGE_EXTENSIONS_VIEWABLE.includes(ext),
       };
     });
 
@@ -267,7 +269,11 @@ class MediaLibrary extends React.Component {
                   tabIndex="-1"
                 >
                   <div className="nc-mediaLibrary-cardImage-container">
-                    <img src={file.url} className="nc-mediaLibrary-cardImage"/>
+                    {
+                      file.isViewableImage
+                        ? <img src={file.url} className="nc-mediaLibrary-cardImage"/>
+                        : <div className="nc-mediaLibrary-cardImage"/>
+                    }
                   </div>
                   <p className="nc-mediaLibrary-cardText">{file.name}</p>
                 </div>
