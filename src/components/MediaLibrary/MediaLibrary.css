@@ -28,6 +28,11 @@
   }
 }
 
+.nc-mediaLibrary-title {
+  position: absolute;
+  margin-top: 20px;
+}
+
 .nc-mediaLibrary-buttonRight {
   float: right;
   margin-left: 10px;
@@ -83,10 +88,16 @@
   align-items: center;
 }
 
-.nc-mediaLibrary-cardGrid {
+.nc-mediaLibrary-paginatingMessage {
+}
+
+.nc-mediaLibrary-cardGrid-container {
   height: calc(100% - 150px);
   margin: 20px auto 0;
   overflow-y: auto;
+}
+
+.nc-mediaLibrary-cardGrid {
   display: flex;
   flex-wrap: wrap;
 }

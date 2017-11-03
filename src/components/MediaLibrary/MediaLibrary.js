@@ -99,7 +99,7 @@ class MediaLibrary extends React.Component {
   /**
    * Upload a file.
    */
-  handlePersist = event => {
+  handlePersist = async event => {
     /**
      * Stop the browser from automatically handling the file input click, and
      * get the file for upload.
@@ -116,7 +116,8 @@ class MediaLibrary extends React.Component {
      * improved in the future, but isn't currently resulting in noticeable
      * performance/load time issues.
      */
-    return persistMedia(file, privateUpload);
+    await persistMedia(file, privateUpload);
+    this.scrollToTop();
   };
 
   /**
@@ -160,11 +161,16 @@ class MediaLibrary extends React.Component {
    * the GitHub backend, search is in-memory and occurs as the query is typed,
    * so this handler has no impact.
    */
-  handleSearchKeyDown = (event) => {
+  handleSearchKeyDown = async (event) => {
     if (event.key === 'Enter' && this.props.dynamicSearch) {
-      this.props.loadMedia({ query: this.state.query });
+      await this.props.loadMedia({ query: this.state.query })
+      this.scrollToTop();
     }
   };
+
+  scrollToTop = () => {
+    this.scrollContainerRef.scrollTop = 0;
+  }
 
   /**
    * Updates query state as the user types in the search field.
@@ -204,6 +210,7 @@ class MediaLibrary extends React.Component {
       isDeleting,
       hasNextPage,
       page,
+      isPaginating,
     } = this.props;
     const { query, selectedFile } = this.state;
     const filteredFiles = forImage ? this.filterImages(files) : files;
@@ -239,7 +246,7 @@ class MediaLibrary extends React.Component {
           />
         }
       >
-        <h1>{forImage ? 'Images' : 'Assets'}</h1>
+        <h1 className="nc-mediaLibrary-title">{forImage ? 'Images' : 'Assets'}</h1>
         <input
           className="nc-mediaLibrary-searchInput"
           value={query}
@@ -249,31 +256,35 @@ class MediaLibrary extends React.Component {
           disabled={!dynamicSearchActive && !hasFilteredFiles}
           autoFocus
         />
-        <div className="nc-mediaLibrary-cardGrid">
-          {
-            tableData.map((file, idx) =>
-              <div
-                key={file.key}
-                className={c('nc-mediaLibrary-card', { 'nc-mediaLibrary-card-selected': selectedFile.key === file.key })}
-                onClick={() => this.handleAssetClick(file)}
-              >
-                <div className="nc-mediaLibrary-cardImage-container">
-                  <img src={file.url} className="nc-mediaLibrary-cardImage"/>
+        <div className="nc-mediaLibrary-cardGrid-container" ref={ref => (this.scrollContainerRef = ref)}>
+          <div className="nc-mediaLibrary-cardGrid">
+            {
+              tableData.map((file, idx) =>
+                <div
+                  key={file.key}
+                  className={c('nc-mediaLibrary-card', { 'nc-mediaLibrary-card-selected': selectedFile.key === file.key })}
+                  onClick={() => this.handleAssetClick(file)}
+                  tabIndex="-1"
+                >
+                  <div className="nc-mediaLibrary-cardImage-container">
+                    <img src={file.url} className="nc-mediaLibrary-cardImage"/>
+                  </div>
+                  <p className="nc-mediaLibrary-cardText">{file.name}</p>
                 </div>
-                <p className="nc-mediaLibrary-cardText">{file.name}</p>
-              </div>
-            )
-          }
-          {
-            hasNextPage
-              ? <Waypoint onEnter={() => this.handleLoadMore()}/>
-              : null
-          }
+              )
+            }
+            {
+              hasNextPage
+                ? <Waypoint onEnter={() => this.handleLoadMore()}/>
+                : null
+            }
+          </div>
           {
             shouldShowEmptyMessage
               ? <div className="nc-mediaLibrary-emptyMessage"><h1>{emptyMessage}</h1></div>
               : null
           }
+          { isPaginating ? <h1 className="nc-mediaLibrary-paginatingMessage">Loading...</h1> : null }
         </div>
       </Dialog>
     );
@@ -299,6 +310,7 @@ const mapStateToProps = state => {
     privateUpload: mediaLibrary.get('privateUpload'),
     page: mediaLibrary.get('page'),
     hasNextPage: mediaLibrary.get('hasNextPage'),
+    isPaginating: mediaLibrary.get('isPaginating'),
   };
   return { ...configProps, ...mediaLibraryProps };
 };

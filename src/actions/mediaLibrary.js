@@ -40,7 +40,7 @@ export function loadMedia(opts = {}) {
     const integration = selectIntegration(state, null, 'assetStore');
     if (integration) {
       const provider = getIntegrationProvider(state.integrations, backend.getToken, integration);
-      dispatch(mediaLoading());
+      dispatch(mediaLoading(page));
       try {
         const files = await provider.retrieve(query, page);
         const mediaLoadedOpts = {
@@ -55,7 +55,7 @@ export function loadMedia(opts = {}) {
         return dispatch(mediaLoadFailed());
       }
     }
-    dispatch(mediaLoading());
+    dispatch(mediaLoading(page));
     return new Promise(resolve => {
       setTimeout(() => resolve(
         backend.getMedia()
@@ -134,8 +134,11 @@ export function deleteMedia(file) {
   };
 }
 
-export function mediaLoading() {
-  return { type: MEDIA_LOAD_REQUEST };
+export function mediaLoading(page) {
+  return {
+    type: MEDIA_LOAD_REQUEST,
+    payload: { page },
+  }
 }
 
 export function mediaLoaded(files, opts = {}) {
@@ -154,7 +157,6 @@ export function mediaPersisting() {
 }
 
 export function mediaPersisted(asset) {
-  console.log(asset);
   return {
     type: MEDIA_PERSIST_SUCCESS,
     payload: { file: asset },

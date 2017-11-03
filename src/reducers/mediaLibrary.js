@@ -35,12 +35,16 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
       return state.setIn(['controlMedia', controlID], mediaPath);
     }
     case MEDIA_LOAD_REQUEST:
-      return state.set('isLoading', true);
+      return state.withMutations(map => {
+        map.set('isLoading', true);
+        map.set('isPaginating', action.payload.page > 1);
+      });
     case MEDIA_LOAD_SUCCESS: {
       const { files, page, canPaginate, dynamicSearch, dynamicSearchQuery } = action.payload;
       const filesWithKeys = files.map(file => ({ ...file, key: uuid() }));
       return state.withMutations(map => {
         map.set('isLoading', false);
+        map.set('isPaginating', false);
         map.set('page', page);
         map.set('hasNextPage', canPaginate && files && files.length > 0);
         map.set('dynamicSearch', dynamicSearch);
@@ -60,7 +64,6 @@ const mediaLibrary = (state = Map({ isVisible: false, controlMedia: Map() }), ac
       return state.set('isPersisting', true);
     case MEDIA_PERSIST_SUCCESS: {
       const { file } = action.payload;
-      console.log(file);
       return state.withMutations(map => {
         const fileWithKey = { ...file, key: uuid() };
         const updatedFiles = [fileWithKey, ...map.get('files')];
