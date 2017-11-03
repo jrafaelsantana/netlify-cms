@@ -116,8 +116,7 @@ class MediaLibrary extends React.Component {
      * improved in the future, but isn't currently resulting in noticeable
      * performance/load time issues.
      */
-    return persistMedia(file, privateUpload)
-      .then(() => loadMedia({ query: this.state.query }));
+    return persistMedia(file, privateUpload);
   };
 
   /**

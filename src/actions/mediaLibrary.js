@@ -67,30 +67,31 @@ export function loadMedia(opts = {}) {
 }
 
 export function persistMedia(file, privateUpload) {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const state = getState();
     const backend = currentBackend(state.config);
     const integration = selectIntegration(state, null, 'assetStore');
 
     dispatch(mediaPersisting());
 
-    return createAssetProxy(file.name.toLowerCase(), file, false, privateUpload)
-      .then(assetProxy => {
-        dispatch(addAsset(assetProxy));
-        if (!integration) {
-          return backend.persistMedia(assetProxy);
-        }
-      })
-      .then(() => dispatch(mediaPersisted()))
-      .catch((error) => {
-        console.error(error);
-        dispatch(notifSend({
-          message: `Failed to persist media: ${ error }`,
-          kind: 'danger',
-          dismissAfter: 8000,
-        }));
-        return dispatch(mediaPersistFailed());
-      });
+    try {
+      const assetProxy = await createAssetProxy(file.name.toLowerCase(), file, false, privateUpload);
+      dispatch(addAsset(assetProxy));
+      if (!integration) {
+        const asset = await backend.persistMedia(assetProxy);
+        return dispatch(mediaPersisted(asset));
+      }
+      return dispatch(mediaPersisted(assetProxy.asset));
+    }
+    catch(error) {
+      console.error(error);
+      dispatch(notifSend({
+        message: `Failed to persist media: ${ error }`,
+        kind: 'danger',
+        dismissAfter: 8000,
+      }));
+      return dispatch(mediaPersistFailed());
+    }
   };
 }
 
@@ -104,8 +105,7 @@ export function deleteMedia(file) {
       dispatch(mediaDeleting());
       return provider.delete(file.id)
         .then(() => {
-          dispatch(mediaDeleted());
-          return dispatch(loadMedia({ delay: 500 }));
+          return dispatch(mediaDeleted(file));
         })
         .catch(error => {
           console.error(error);
@@ -120,8 +120,7 @@ export function deleteMedia(file) {
     dispatch(mediaDeleting());
     return backend.deleteMedia(file.path)
       .then(() => {
-        dispatch(mediaDeleted());
-        return dispatch(loadMedia({ delay: 500 }));
+        return dispatch(mediaDeleted(file));
       })
       .catch(error => {
         console.error(error);
@@ -154,8 +153,12 @@ export function mediaPersisting() {
   return { type: MEDIA_PERSIST_REQUEST };
 }
 
-export function mediaPersisted() {
-  return { type: MEDIA_PERSIST_SUCCESS };
+export function mediaPersisted(asset) {
+  console.log(asset);
+  return {
+    type: MEDIA_PERSIST_SUCCESS,
+    payload: { file: asset },
+  };
 }
 
 export function mediaPersistFailed(error) {
@@ -166,10 +169,10 @@ export function mediaDeleting() {
   return { type: MEDIA_DELETE_REQUEST };
 }
 
-export function mediaDeleted(path) {
+export function mediaDeleted(file) {
   return {
     type: MEDIA_DELETE_SUCCESS,
-    payload: { path },
+    payload: { file },
   };
 }
 
