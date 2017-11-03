@@ -16,9 +16,9 @@ const MediaLibraryFooter = ({
   const shouldShowLoader = isPersisting || isDeleting;
   const loaderText = isPersisting ? 'Uploading...' : 'Deleting...';
   const loader = (
-    <div className="nc-mediaLibrary-button-loader">
-      <Loader className="nc-mediaLibrary-button-loaderSpinner" active/>
-      <strong className="nc-mediaLibrary-button-loaderText">{loaderText}</strong>
+    <div className="nc-mediaLibrary-footer-button-loader">
+      <Loader className="nc-mediaLibrary-footer-button-loaderSpinner" active/>
+      <strong className="nc-mediaLibrary-footer-button-loaderText">{loaderText}</strong>
     </div>
   );
   return (
@@ -26,7 +26,7 @@ const MediaLibraryFooter = ({
       <Button
         label="Delete"
         onClick={onDelete}
-        className="nc-mediaLibrary-buttonLeft"
+        className="nc-mediaLibrary-footer-buttonLeft"
         disabled={shouldShowLoader || !hasSelection}
         accent
         raised
@@ -35,7 +35,7 @@ const MediaLibraryFooter = ({
         label="Upload"
         accept={forImage}
         onChange={onPersist}
-        className="nc-mediaLibrary-buttonLeft"
+        className="nc-mediaLibrary-footer-buttonLeft"
         disabled={shouldShowLoader}
         primary
         raised
@@ -44,14 +44,14 @@ const MediaLibraryFooter = ({
       <Button
         label="Close"
         onClick={onClose}
-        className="nc-mediaLibrary-buttonRight"
+        className="nc-mediaLibrary-footer-buttonRight"
         raised
       />
       { !canInsert ? null :
         <Button
           label="Insert"
           onClick={onInsert}
-          className="nc-mediaLibrary-buttonRight"
+          className="nc-mediaLibrary-footer-buttonRight"
           disabled={!hasSelection}
           primary
           raised

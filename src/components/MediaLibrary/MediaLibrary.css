@@ -1,3 +1,5 @@
+@import './MediaLibraryFooter.css';
+
 :root {
   --mediaLibraryCardWidth: 300px;
   --mediaLibraryCardMargin: 10px;
@@ -33,31 +35,6 @@
   margin-top: 20px;
 }
 
-.nc-mediaLibrary-buttonRight {
-  float: right;
-  margin-left: 10px;
-}
-
-.nc-mediaLibrary-buttonLeft {
-  float: left;
-  margin-right: 10px;
-}
-
-.nc-mediaLibrary-button-loader {
-  float: left;
-  margin: 8px 20px;
-}
-
-.nc-mediaLibrary-button-loaderSpinner {
-  position: static;
-}
-
-.nc-mediaLibrary-button-loaderText {
-  position: relative;
-  top: 2px;
-  margin-left: 18px;
-}
-
 .nc-mediaLibrary-searchInput {
   @apply --input;
   font-family: var(--fontFamilyPrimary);
@@ -69,14 +46,6 @@
   z-index: 1;
 }
 
-.nc-mediaLibrary-thumbnail {
-  max-height: 44px;
-  max-width: 88px;
-  margin: -10px auto;
-  display: block;
-  border-radius: 4px;
-}
-
 .nc-mediaLibrary-emptyMessage {
   height: 100%;
   width: 100%;
@@ -86,9 +55,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.nc-mediaLibrary-paginatingMessage {
 }
 
 .nc-mediaLibrary-cardGrid-container {
@@ -109,6 +75,7 @@
   border: var(--textFieldBorder);
   border-radius: var(--borderRadius);
   cursor: pointer;
+  overflow: hidden;
 }
 
 .nc-mediaLibrary-card-selected {
