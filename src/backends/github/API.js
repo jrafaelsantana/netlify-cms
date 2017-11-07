@@ -365,30 +365,40 @@ export default class API {
    * (should generally be the configured backend branch). Only rebases changes
    * in the entry file.
    */
-  rebasePullRequest(prNumber, branchName, contentKey, metadata, head) {
+  async rebasePullRequest(prNumber, branchName, contentKey, metadata, head) {
     const { path } = metadata.objects.entry;
 
-    /**
-     * Get the published branch and create new commits over it. If the pull
-     * request is up to date, no rebase will occur.
-     */
-    return this.getBranch()
-      .then(baseBranch => {
-        return this.getPullRequestCommits(prNumber, head).then(commits => {
-          return this.rebaseSingleBlobCommits(baseBranch.commit, commits, path);
-        });
-      })
+    try {
+      /**
+       * Get the published branch and create new commits over it. If the pull
+       * request is up to date, no rebase will occur.
+       */
+      const baseBranch = await this.getBranch();
+      const commits = await this.getPullRequestCommits(prNumber, head);
+
+      /**
+       * Sometimes the list of commits for a pull request isn't updated
+       * immediately after the PR branch is patched. There's also the possibility
+       * that the branch has changed unexpectedly. We account for both by adding
+       * the head if it's missing, or else throwing an error if the PR head is
+       * neither the head we expect nor its parent.
+       */
+      const finalCommits = this.assertHead(commits, head);
+      const rebasedHead = await this.rebaseSingleBlobCommits(baseBranch.commit, finalCommits, path);
 
       /**
        * Update metadata, then force update the pull request branch head.
        */
-      .then(rebasedHead => {
-        const pr = { ...metadata.pr, head: rebasedHead.sha };
-        const timeStamp = new Date().toISOString();
-        const updatedMetadata = { ...metadata, pr, timeStamp };
-        return this.storeMetadata(contentKey, updatedMetadata)
-          .then(() => this.patchBranch(branchName, rebasedHead.sha, { force: true }));
-      });
+      const pr = { ...metadata.pr, head: rebasedHead.sha };
+      const timeStamp = new Date().toISOString();
+      const updatedMetadata = { ...metadata, pr, timeStamp };
+      await this.storeMetadata(contentKey, updatedMetadata);
+      return this.patchBranch(branchName, rebasedHead.sha, { force: true });
+    }
+    catch(error) {
+      console.error(error);
+      throw error;
+    }
   }
 
   /**
@@ -413,15 +423,14 @@ export default class API {
     const newHeadPromise = commits.reduce((lastCommitPromise, commit, idx) => {
       return lastCommitPromise.then(newParent => {
         /**
-         * Use `baseCommit` as the parent of the first commit, and normalize
-         * commit data to ensure it's not nested in `commit.commit`.
+         * Normalize commit data to ensure it's not nested in `commit.commit`.
          */
-        const parent = this.normalizeCommit(idx === 0 ? baseCommit : newParent);
+        const parent = this.normalizeCommit(newParent);
         const commitToRebase = this.normalizeCommit(commit);
 
         return this.rebaseSingleBlobCommit(parent, commitToRebase, pathToBlob);
       });
-    }, Promise.resolve());
+    }, Promise.resolve(baseCommit));
 
     /**
      * Return a promise that resolves when all commits have been created.
@@ -470,21 +479,28 @@ export default class API {
   }
 
   /**
-   * Get the list of commits for a given pull request. Optionally assert a head
-   * commit.
+   * Get the list of commits for a given pull request.
    */
-  getPullRequestCommits(prNumber, assertHead) {
-    return this.request(`${ this.repoURL }/pulls/${prNumber}/commits`).then(prCommits => {
-      /**
-       * Sometimes the list of commits for a pull request isn't updated
-       * immediately after the PR branch is patched. If the branch is known to
-       * have been updated very recently, `assertHead` will be appended, but
-       * only if the last commit in the response is the parent of `assertHead`.
-       */
-      const missingHead = assertHead && assertHead.parents[0].sha === last(prCommits).sha;
-      const commits = missingHead ? prCommits.concat(assertHead) : prCommits;
+  getPullRequestCommits (prNumber) {
+    return this.request(`${ this.repoURL }/pulls/${prNumber}/commits`);
+  }
+
+  /**
+   * Returns `commits` with `headToAssert` appended if it's the child of the
+   * last commit in `commits`. Returns `commits` unaltered if `headToAssert` is
+   * already the last commit in `commits`. Otherwise throws an error.
+   */
+  assertHead(commits, headToAssert) {
+    const headIsMissing = headToAssert.parents[0].sha === last(commits).sha;
+    const headIsNotMissing = headToAssert.sha === last(commits).sha;
+
+    if (headIsMissing) {
+      return commits.concat(headToAssert);
+    } else if (headIsNotMissing) {
       return commits;
-    });
+    }
+
+    throw Error('Editorial workflow branch changed unexpectedly.');
   }
 
   updateUnpublishedEntryStatus(collection, slug, status) {

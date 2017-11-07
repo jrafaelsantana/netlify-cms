@@ -111,6 +111,7 @@ export default class GitHub {
     }
     catch(error) {
       console.error(error);
+      throw error;
     }
   }
 
