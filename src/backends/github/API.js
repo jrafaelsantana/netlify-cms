@@ -6,6 +6,8 @@ import AssetProxy from "../../valueObjects/AssetProxy";
 import { SIMPLE, EDITORIAL_WORKFLOW, status } from "../../constants/publishModes";
 import { APIError, EditorialWorkflowError } from "../../valueObjects/errors";
 
+const CMS_BRANCH_PREFIX = 'cms/';
+
 export default class API {
   constructor(config) {
     this.api_root = config.api_root || "https://api.github.com";
@@ -81,6 +83,10 @@ export default class API {
     .catch((error) => {
       throw new APIError(error.message, responseStatus, 'GitHub');
     });
+  }
+
+  generateBranchName(basename) {
+    return `${CMS_BRANCH_PREFIX}${basename}`;
   }
 
   checkMetadataRef() {
@@ -295,12 +301,10 @@ export default class API {
 
   editorialWorkflowGit(fileTree, entry, filesList, options) {
     const contentKey = entry.slug;
-    const branchName = `cms/${ contentKey }`;
+    const branchName = this.generateBranchName(contentKey);
     const unpublished = options.unpublished || false;
     if (!unpublished) {
       // Open new editorial review workflow for this entry - Create new metadata and commit to new branch`
-      const contentKey = entry.slug;
-      const branchName = `cms/${ contentKey }`;
       let prResponse;
 
       return this.getBranch()
@@ -515,9 +519,10 @@ export default class API {
 
   deleteUnpublishedEntry(collection, slug) {
     const contentKey = slug;
+    const branchName = this.generateBranchName(contentKey);
     return this.retrieveMetadata(contentKey)
     .then(metadata => this.closePR(metadata.pr, metadata.objects))
-    .then(() => this.deleteBranch(`cms/${ contentKey }`))
+    .then(() => this.deleteBranch(branchName))
     // If the PR doesn't exist, then this has already been deleted -
     // deletion should be idempotent, so we can consider this a
     // success.
@@ -531,10 +536,11 @@ export default class API {
 
   publishUnpublishedEntry(collection, slug) {
     const contentKey = slug;
+    const branchName = this.generateBranchName(contentKey);
     let prNumber;
     return this.retrieveMetadata(contentKey)
     .then(metadata => this.mergePR(metadata.pr, metadata.objects))
-    .then(() => this.deleteBranch(`cms/${ contentKey }`));
+    .then(() => this.deleteBranch(branchName));
   }
 
 
@@ -567,7 +573,14 @@ export default class API {
     return this.createRef("heads", branchName, sha);
   }
 
+  assertCmsBranch(branchName) {
+    return branchName.startsWith(CMS_BRANCH_PREFIX);
+  }
+
   patchBranch(branchName, sha, opts = {}) {
+    if (!this.assertCmsBranch(branchName)) {
+      throw Error(`Only CMS branches can be force updated, cannot force update ${branchName}`);
+    }
     const force = opts.force || false;
     return this.patchRef("heads", branchName, sha, { force });
   }
